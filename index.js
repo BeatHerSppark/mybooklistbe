@@ -7,11 +7,11 @@ import bookRoutes from "./routes/books.js";
 
 const app = express();
 
-app.use("/books", bookRoutes);
-
 app.use(bodyParser.json({ limit: "30mb", extended: true }));
 app.use(bodyParser.urlencoded({ limit: "30mb", extended: true }));
 app.use(cors());
+
+app.use("/books", bookRoutes);
 
 const CONNECTION_URL =
   "mongodb+srv://bhs:jassummbl545@cluster0.kg2kn98.mongodb.net/?retryWrites=true&w=majority";
