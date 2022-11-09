@@ -10,10 +10,7 @@ const bookSchema = mongoose.Schema({
     type: Number,
     default: 0,
   },
-  released: {
-    type: Date,
-    default: new Date(),
-  },
+  released: String,
 });
 
 const BookSchema = mongoose.model("BookSchema", bookSchema);
