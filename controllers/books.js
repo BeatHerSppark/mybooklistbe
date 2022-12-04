@@ -11,6 +11,18 @@ export const getBooks = async (req, res) => {
   }
 };
 
+export const getBook = async (req, res) => {
+  try {
+    const { id: _id } = req.params;
+
+    const book = await BookSchema.findById(_id);
+
+    res.status(200).json(book);
+  } catch (error) {
+    res.status(404).json({ message: error.message });
+  }
+};
+
 export const addBook = async (req, res) => {
   const book = req.body;
 
