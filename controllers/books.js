@@ -1,9 +1,11 @@
 import mongoose from "mongoose";
-import BookSchema from "../models/bookSchema.js";
+import Book from "../models/book.js";
+import Author from "../models/author.js";
+import Genre from "../models/genre.js";
 
 export const getBooks = async (req, res) => {
   try {
-    const books = await BookSchema.find();
+    const books = await Book.find();
 
     res.status(200).json(books);
   } catch (error) {
@@ -15,7 +17,7 @@ export const getBook = async (req, res) => {
   try {
     const { id: _id } = req.params;
 
-    const book = await BookSchema.findById(_id);
+    const book = await Book.findById(_id);
 
     res.status(200).json(book);
   } catch (error) {
@@ -24,17 +26,55 @@ export const getBook = async (req, res) => {
 };
 
 export const addBook = async (req, res) => {
-  const book = req.body;
-
-  const newBook = new BookSchema(book);
+  const { bookData, authorName, genres } = req.body;
 
   try {
-    await newBook.save();
+    // Author
+    const existingAuthor = await Author.findOne({ name: authorName });
+    let savedAuthor;
 
-    res.status(201).json(newBook);
+    if (existingAuthor) {
+      savedAuthor = existingAuthor;
+    } else {
+      const newAuthor = new Author({ name: authorName });
+      savedAuthor = await newAuthor.save();
+    }
+
+    // Genres
+    const genresArr = genres.split(" ");
+    let genresIds = [];
+    genresArr.map(async (genre) => {
+      const existingGenre = await Genre.findOne({ name: genre });
+      let savedGenre;
+
+      if (existingGenre) {
+        savedGenre = existingGenre;
+      } else {
+        const newGenre = new Genre({ name: genre });
+        savedGenre = await newGenre.save();
+      }
+
+      genresIds.push(savedGenre._id);
+    });
+
+    const newBook = new Book(bookData);
+    newBook.author = savedAuthor._id;
+    newBook.genres = genresIds;
+    const savedBook = await newBook.save();
+
+    res.status(201).json(savedBook);
   } catch (error) {
+    console.log(error.message);
     res.status(409).json({ message: error.message });
   }
+
+  // try {
+  //   await newBook.save();
+
+  //   res.status(201).json(newBook);
+  // } catch (error) {
+  //   res.status(409).json({ message: error.message });
+  // }
 };
 
 export const updateBook = async (req, res) => {
@@ -44,7 +84,7 @@ export const updateBook = async (req, res) => {
   if (!mongoose.Types.ObjectId.isValid(_id))
     return res.status(404).send("No book with that ID");
 
-  const updatedBook = await BookSchema.findByIdAndUpdate(_id, book, {
+  const updatedBook = await Book.findByIdAndUpdate(_id, book, {
     new: true,
   });
 
@@ -57,7 +97,7 @@ export const deleteBook = async (req, res) => {
   if (!mongoose.Types.ObjectId.isValid(_id))
     return res.status(404).send("No book with that ID");
 
-  await BookSchema.findByIdAndRemove(_id);
+  await Book.findByIdAndRemove(_id);
 
   res.json({ message: "Book deleted successfully" });
 };
