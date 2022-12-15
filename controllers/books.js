@@ -29,6 +29,8 @@ export const addBook = async (req, res) => {
   const { bookData, authorName, genres } = req.body;
 
   try {
+    const newBook = new Book(bookData);
+
     // Author
     const existingAuthor = await Author.findOne({ name: authorName });
     let savedAuthor;
@@ -40,26 +42,36 @@ export const addBook = async (req, res) => {
       savedAuthor = await newAuthor.save();
     }
 
+    newBook.author = savedAuthor._id;
+
     // Genres
     const genresArr = genres.split(" ");
-    let genresIds = [];
-    genresArr.map(async (genre) => {
-      const existingGenre = await Genre.findOne({ name: genre });
+    for (let i = 0; i < genresArr.length; i++) {
+      const existingGenre = await Genre.findOne({ name: genresArr[i] });
       let savedGenre;
 
       if (existingGenre) {
         savedGenre = existingGenre;
       } else {
-        const newGenre = new Genre({ name: genre });
+        const newGenre = new Genre({ name: genresArr[i] });
         savedGenre = await newGenre.save();
       }
+      newBook.genres = [...newBook.genres, savedGenre._id];
+    }
 
-      genresIds.push(savedGenre._id);
-    });
+    // genresArr.map(async (genre) => {
+    //   const existingGenre = await Genre.findOne({ name: genre });
+    //   let savedGenre;
 
-    const newBook = new Book(bookData);
-    newBook.author = savedAuthor._id;
-    newBook.genres = genresIds;
+    //   if (existingGenre) {
+    //     savedGenre = existingGenre;
+    //   } else {
+    //     const newGenre = new Genre({ name: genre });
+    //     savedGenre = await newGenre.save();
+    //   }
+    //   newBook.genres = [...newBook.genres, savedGenre._id];
+    // });
+
     const savedBook = await newBook.save();
 
     res.status(201).json(savedBook);
