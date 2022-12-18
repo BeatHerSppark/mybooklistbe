@@ -59,34 +59,22 @@ export const addBook = async (req, res) => {
       newBook.genres = [...newBook.genres, savedGenre._id];
     }
 
-    // genresArr.map(async (genre) => {
-    //   const existingGenre = await Genre.findOne({ name: genre });
-    //   let savedGenre;
-
-    //   if (existingGenre) {
-    //     savedGenre = existingGenre;
-    //   } else {
-    //     const newGenre = new Genre({ name: genre });
-    //     savedGenre = await newGenre.save();
-    //   }
-    //   newBook.genres = [...newBook.genres, savedGenre._id];
-    // });
-
     const savedBook = await newBook.save();
+
+    // Add book to author's books array
+    await Author.findOneAndUpdate(
+      { _id: savedAuthor._id },
+      { $push: { books: savedBook._id } },
+      { new: true }
+    )
+      .populate("books")
+      .exec();
 
     res.status(201).json(savedBook);
   } catch (error) {
     console.log(error.message);
     res.status(409).json({ message: error.message });
   }
-
-  // try {
-  //   await newBook.save();
-
-  //   res.status(201).json(newBook);
-  // } catch (error) {
-  //   res.status(409).json({ message: error.message });
-  // }
 };
 
 export const updateBook = async (req, res) => {
